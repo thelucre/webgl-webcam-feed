@@ -10,10 +10,10 @@
  *
  */
 var fov = 70;
-var canvasWidth = 640 ;
-var canvasHeight = 480 ;
-var vidWidth = 640;
-var vidHeight = 480;
+var canvasWidth = 320 ;
+var canvasHeight = 240 ;
+var vidWidth = 160;
+var vidHeight = 120;
 var tiltSpeed = 0.1;
 var tiltAmount = 0.5;
 
@@ -121,7 +121,7 @@ function init() {
 	});
 
 	videoTexture = new THREE.Texture(video);
-	videoTexture.minFilter = THREE.NearestFilter;
+	videoTexture.minFilter = THREE.LinearFilter;
 
 
 	world3D = new THREE.Object3D();
@@ -132,24 +132,24 @@ function init() {
 
 
 	//add mirror plane
-	geometry = new THREE.PlaneGeometry(640, 480, canvasWidth, canvasHeight);
+	geometry = new THREE.PlaneGeometry(160 , 120, canvasWidth, canvasHeight);
 	geometry.dynamic = true;
 	meshMaterial = new THREE.MeshBasicMaterial({
 		opacity: 1,
 		map: videoTexture
 	});
 	win2 = new THREE.Mesh(geometry, meshMaterial);
-	win2.position.set(350,0,1);
-	// world3D.add(win2);
+	win2.position.set(0,0,1);
+	world3D.add(win2);
 
-	var geometry2 = new THREE.PlaneGeometry(640, 480, canvasWidth, canvasHeight);
-	meshMaterial = new THREE.MeshBasicMaterial({
-		opacity: 1,
-		map: videoTexture
-	});
-	win1 = new THREE.Mesh(geometry2, meshMaterial);
-	world3D.add(win1);
-	win1.position.set(0,0,1);
+	// var geometry2 = new THREE.PlaneGeometry(640, 480, canvasWidth, canvasHeight);
+	// meshMaterial = new THREE.MeshBasicMaterial({
+	// 	opacity: 1,
+	// 	map: videoTexture
+	// });
+	// win1 = new THREE.Mesh(geometry2, meshMaterial);
+	// // world3D.add(win1);
+	// win1.position.set(0,0,1);
 
 
 	//add wireframe plane
@@ -169,19 +169,8 @@ function init() {
 		antialias: true
 	});
 	renderer.sortObjects = false;
-	renderer.setSize(window.innerWidth/2, window.innerHeight);
+	renderer.setSize(window.innerWidth, window.innerHeight);
 	container.appendChild(renderer.domElement);
-
-	ren2 = new THREE.WebGLRenderer({
-		antialias: true
-	});
-	ren2.sortObjects = false;
-	ren2.setSize(window.innerWidth/2, window.innerHeight);
-	container.appendChild(ren2.domElement);
-
-	// add Stats
-	stats = new Stats();
-	document.querySelector('.fps').appendChild(stats.domElement);
 
 	//init vidCanvas - used to analyze the video pixels
 	vidCanvas = document.createElement('canvas');
@@ -190,12 +179,7 @@ function init() {
 	vidCanvas.style.display = 'none';
 	ctx = vidCanvas.getContext('2d');
 
-	//init listeners
-	document.addEventListener('mousemove', onMouseMove, false);
 	window.addEventListener('resize', onResize, false);
-	document.addEventListener('mousewheel', onWheel, false);
-	container.addEventListener('click', hideInfo, false);
-	document.querySelector('.closeBtn').addEventListener('click', hideInfo, false);
 
 	//handle WebGL context lost
 	renderer.domElement.addEventListener("webglcontextlost", function(event) {
@@ -233,28 +217,28 @@ function onParamsChange() {
 
 function getZDepths() {
 
-	// noisePosn += params.noiseSpeed;
-	//
-	// //draw webcam video pixels to canvas for pixel analysis
-	// //double up on last pixel get because there is one more vert than pixels
-	// ctx.drawImage(video, 0, 0, canvasWidth + 1, canvasHeight + 1);
-	// pixels = ctx.getImageData(0, 0, canvasWidth + 1, canvasHeight + 1).data;
-	//
-	// for (var i = 0; i < canvasWidth + 1; i++) {
-	// 	for (var j = 0; j < canvasHeight + 1; j++) {
-	// 		var color = new THREE.Color(getColor(i, j));
-	// 		var brightness = getBrightness(color);
-	// 		var gotoZ = params.zDepth * brightness - params.zDepth / 2;
-	//
-	// 		//add noise wobble
-	// 		gotoZ += perlin.noise(i * params.noiseScale, j * params.noiseScale, noisePosn) * params.noiseStrength;
-	// 		//invert?
-	// 		if (params.invertZ) gotoZ = -gotoZ;
-	// 		//tween to stablize
-	// 		geometry.vertices[j * (canvasWidth + 1) + i].z += (gotoZ - geometry.vertices[j * (canvasWidth + 1) + i].z) / 5;
-	// 	}
-	// }
-	// geometry.verticesNeedUpdate = true;
+	noisePosn += params.noiseSpeed;
+
+	//draw webcam video pixels to canvas for pixel analysis
+	//double up on last pixel get because there is one more vert than pixels
+	ctx.drawImage(video, 0, 0, canvasWidth + 1, canvasHeight + 1);
+	pixels = ctx.getImageData(0, 0, canvasWidth + 1, canvasHeight + 1).data;
+
+	for (var i = 0; i < canvasWidth + 1; i++) {
+		for (var j = 0; j < canvasHeight + 1; j++) {
+			var color = new THREE.Color(getColor(i, j));
+			var brightness = getBrightness(color);
+			var gotoZ = params.zDepth * brightness - params.zDepth / 2;
+
+			//add noise wobble
+			gotoZ += perlin.noise(i * params.noiseScale, j * params.noiseScale, noisePosn) * params.noiseStrength;
+			//invert?
+			if (params.invertZ) gotoZ = -gotoZ;
+			//tween to stablize
+			geometry.vertices[j * (canvasWidth + 1) + i].z += (gotoZ - geometry.vertices[j * (canvasWidth + 1) + i].z) / 5;
+		}
+	}
+	geometry.verticesNeedUpdate = true;
 }
 
 function onMouseMove(event) {
@@ -267,7 +251,6 @@ function animate() {
 		videoTexture.needsUpdate = true;
 		getZDepths();
 	}
-	stats.update();
 	requestAnimationFrame(animate);
 	render();
 }
@@ -278,13 +261,11 @@ function render() {
 	// world3D.rotation.y += ((mouseX * tiltAmount) - world3D.rotation.y) * tiltSpeed;
 	//camera.lookAt(camera.target);
 	renderer.render(scene, camera);
-	ren2.render(scene, camera);
 }
 
 function onResize() {
-	renderer.setSize(window.innerWidth/2, window.innerHeight);
-	ren2.setSize(window.innerWidth/2, window.innerHeight);
-	camera.aspect = window.innerWidth/2 / window.innerHeight;
+	renderer.setSize(window.innerWidth, window.innerHeight);
+	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
 	windowHalfX = window.innerWidth / 2;
 	windowHalfY = window.innerHeight / 2;

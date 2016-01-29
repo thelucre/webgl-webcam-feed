@@ -10,10 +10,10 @@
  *
  */
 var fov = 70;
-var canvasWidth = 320 / 2;
-var canvasHeight = 240 / 2;
-var vidWidth = 320;
-var vidHeight = 240;
+var canvasWidth = 320 / 4;
+var canvasHeight = 240 / 4;
+var vidWidth = 320/4;
+var vidHeight = 240/4;
 var tiltSpeed = 0.1;
 var tiltAmount = 0.5;
 
@@ -34,6 +34,8 @@ var meshMaterial;
 var container;
 var params;
 var title, info, prompt;
+var masks = [];
+var mirror, wiremirror;
 
 
 function detectSpecs() {
@@ -128,18 +130,19 @@ function init() {
 	});
 
 	videoTexture = new THREE.Texture(video);
+	videoTexture.minFilter = THREE.NearestFilter;
 
 	world3D = new THREE.Object3D();
 	scene.add(world3D);
 
 	//add mirror plane
-	geometry = new THREE.PlaneGeometry(640, 480, canvasWidth, canvasHeight);
+	geometry = new THREE.PlaneGeometry(160, 120, canvasWidth, canvasHeight);
 	geometry.dynamic = true;
 	meshMaterial = new THREE.MeshBasicMaterial({
 		opacity: 1,
 		map: videoTexture
 	});
-	var mirror = new THREE.Mesh(geometry, meshMaterial);
+	mirror = new THREE.Mesh(geometry, meshMaterial);
 	world3D.add(mirror);
 
 	//add wireframe plane
@@ -150,9 +153,40 @@ function init() {
 		blending: THREE.AdditiveBlending,
 		transparent: true
 	});
-	var wiremirror = new THREE.Mesh(geometry, wireMaterial);
+	wiremirror = new THREE.Mesh(geometry, wireMaterial);
 	world3D.add(wiremirror);
-	wiremirror.position.z = 5;
+	wiremirror.position.z = 0;
+
+	// Create masks
+	var maskgeo = new THREE.BoxGeometry( 1000, 1000, 1 );
+	var maskmat = new THREE.MeshBasicMaterial( {color: 0x000000} );
+	var mask = new THREE.Mesh( maskgeo, maskmat );
+	mask.position.set(-570,0,400);
+	masks.push(mask);
+	scene.add( mask );
+
+	var maskgeo = new THREE.BoxGeometry( 1000, 1000, 1 );
+	var maskmat = new THREE.MeshBasicMaterial( {color: 0x000000} );
+	var mask = new THREE.Mesh( maskgeo, maskmat );
+	mask.position.set(570,0,400);
+	masks.push(mask);
+	scene.add( mask );
+
+	// BOTTOM
+	var maskgeo = new THREE.BoxGeometry( 1000, 1000, 1 );
+	var maskmat = new THREE.MeshBasicMaterial( {color: 0x000000} );
+	var mask = new THREE.Mesh( maskgeo, maskmat );
+	mask.position.set(0,-600,400);
+	masks.push(mask);
+	scene.add( mask );
+
+	// TOP
+	var maskgeo = new THREE.BoxGeometry( 1000, 1000, 1 );
+	var maskmat = new THREE.MeshBasicMaterial( {color: 0x000000} );
+	var mask = new THREE.Mesh( maskgeo, maskmat );
+	mask.position.set(0,580,400);
+	masks.push(mask);
+	scene.add( mask );
 
 	//init renderer
 	renderer = new THREE.WebGLRenderer({
@@ -196,14 +230,14 @@ function init() {
 // params for dat.gui
 
 function WCMParams() {
-	this.zoom = 1;
+	this.zoom = 1.8;
 	this.mOpac = 1;
 	this.wfOpac = 0.1;
-	this.contrast = 3;
-	this.saturation = 1;
+	this.contrast = 1.7;
+	this.saturation = 0.87;
 	this.invertZ = false;
-	this.zDepth = 400;
-	this.noiseStrength = 200;
+	this.zDepth = 748;
+	this.noiseStrength = 20;
 	this.noiseScale = 0.01;
 	this.noiseSpeed = 0.02;
 	//this.doSnapshot = function() {};
@@ -257,7 +291,8 @@ function animate() {
 }
 
 function render() {
-	world3D.scale = new THREE.Vector3(params.zoom, params.zoom, 1);
+	mirror.scale.set(params.zoom*5,params.zoom*5,mirror.scale.z);
+	wiremirror.scale.set(params.zoom*5,params.zoom*5,wiremirror.scale.z);
 	world3D.rotation.x += ((mouseY * tiltAmount) - world3D.rotation.x) * tiltSpeed;
 	world3D.rotation.y += ((mouseX * tiltAmount) - world3D.rotation.y) * tiltSpeed;
 	//camera.lookAt(camera.target);
