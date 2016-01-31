@@ -103,7 +103,8 @@ function init() {
 	camera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, 1, 5000);
 	camera.target = new THREE.Vector3(0, 0, 0);
 	scene.add(camera);
-	camera.position.z = 600;
+	camera.position.z = 500;
+	camera.rotation.set(0,0,Math.PI/2);
 
 	//init webcam texture
 	video = document.createElement('video');
@@ -128,6 +129,7 @@ function init() {
 	}, function(error) {
 		prompt.innerHTML = 'Unable to capture WebCam. Please reload the page.';
 	});
+
 
 	videoTexture = new THREE.Texture(video);
 	videoTexture.minFilter = THREE.NearestFilter;
@@ -176,7 +178,7 @@ function init() {
 	var maskgeo = new THREE.BoxGeometry( 1000, 1000, 1 );
 	var maskmat = new THREE.MeshBasicMaterial( {color: 0x000000} );
 	var mask = new THREE.Mesh( maskgeo, maskmat );
-	mask.position.set(0,-600,400);
+	mask.position.set(0,-650,400);
 	masks.push(mask);
 	scene.add( mask );
 
@@ -184,7 +186,7 @@ function init() {
 	var maskgeo = new THREE.BoxGeometry( 1000, 1000, 1 );
 	var maskmat = new THREE.MeshBasicMaterial( {color: 0x000000} );
 	var mask = new THREE.Mesh( maskgeo, maskmat );
-	mask.position.set(0,580,400);
+	mask.position.set(0,650,400);
 	masks.push(mask);
 	scene.add( mask );
 
@@ -224,6 +226,8 @@ function init() {
 	onResize();
 
 	animate();
+
+	addCommandKeys();
 
 }
 
@@ -318,6 +322,29 @@ function getColor(x, y) {
 		a: pixels[base + 3]
 	};
 	return (c.r << 16) + (c.g << 8) + c.b;
+}
+
+function addCommandKeys() {
+	// Go FULLSCREEN
+	Mousetrap.bind('f', function() {
+		renderer.domElement.webkitRequestFullScreen();
+	});
+
+	Mousetrap.bind('e', function() {
+		win1.scale.set(win1.scale.x*(1+(1-options.scaleDif)),win1.scale.x*(1+(1-options.scaleDif)),win1.scale.x*(1+(1-options.scaleDif)));
+	});
+
+	Mousetrap.bind('w', function() {
+		win1.position.set(win1.position.x, win1.position.y+options.moveDif, win1.position.z);
+	});
+
+	Mousetrap.bind('a', function() {
+		win1.position.set(win1.position.x-options.moveDif, win1.position.y, win1.position.z);
+	});
+
+	Mousetrap.bind('s', function() {
+		win1.position.set(win1.position.x, win1.position.y-options.moveDif, win1.position.z);
+	});
 }
 
 //return pixel brightness between 0 and 1 based on human perceptual bias
