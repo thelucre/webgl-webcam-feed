@@ -15,7 +15,7 @@ var canvasHeight = 240 / 4;
 var vidWidth = 320/4;
 var vidHeight = 240/4;
 var tiltSpeed = 0.1;
-var tiltAmount = 0.5;
+var tiltAmount = 0.2;
 
 var perlin = new ImprovedNoise();
 var camera, scene, renderer;
@@ -36,6 +36,8 @@ var params;
 var title, info, prompt;
 var masks = [];
 var mirror, wiremirror;
+var Tween = createjs.Tween;
+var tv;
 
 
 function detectSpecs() {
@@ -104,7 +106,7 @@ function init() {
 	camera.target = new THREE.Vector3(0, 0, 0);
 	scene.add(camera);
 	camera.position.z = 500;
-	camera.rotation.set(0,0,Math.PI/2);
+	camera.rotation.set(0,0,-Math.PI/2);
 
 	//init webcam texture
 	video = document.createElement('video');
@@ -225,37 +227,110 @@ function init() {
 
 	onResize();
 
-	animate();
+
 
 	addCommandKeys();
 
+	tv = {
+		mx: 0.5,
+		my: 0.5,
+		z: 150,
+		ns: 0.05,
+		invertZ: false,
+		sat: 0.87,
+		con: 1.7
+	};
+
+	rTilt();
+	rZ();
+	nSpeed();
+	// invert();
+	sat();
+	con();
+
+	animate();
+}
+
+function rTilt() {
+	Tween.get(tv)
+		.to({ mx: -1 + Math.random() * 2, my: -1 + Math.random() * 2 }, 1000 + Math.random() * 3000)
+		.wait(Math.random() * 2000)
+		.call(function() {
+			rTilt();
+		})
+	;
+}
+
+function rZ() {
+	Tween.get(tv)
+		.to({ z: 150 + Math.random() * 400 }, 3000 + Math.random() * 7000)
+		.wait(Math.random() * 3000)
+		.call(function() {
+			rZ();
+		})
+	;
+}
+
+function nSpeed() {
+	Tween.get(tv)
+		.to({ ns: 0 + Math.random() * 1.2 }, 3000 + Math.random() * 7000)
+		.wait(Math.random() * 3000)
+		.call(function() {
+			nSpeed();
+		})
+	;
+}
+
+function invert() {
+	tv.invertZ = (Math.random() < 0.5) ? !tv.invertZ : tv.invertZ;
+	setTimeout( invert, Math.random() * 10000 );
+}
+
+function sat() {
+	Tween.get(tv)
+		.to({ sat: 0 + Math.random() * 2 }, 1000 + Math.random() * 3000)
+		.wait(Math.random() * 3000)
+		.call(function() {
+			sat();
+		})
+	;
+}
+
+function con() {
+	Tween.get(tv)
+		.to({ con: 1.3 + Math.random() * .5 }, 3000 + Math.random() * 7000)
+		.wait(Math.random() * 3000)
+		.call(function() {
+			con();
+		})
+	;
 }
 
 // params for dat.gui
 
 function WCMParams() {
-	this.zoom = 1.8;
+	this.zoom = 2.9;
 	this.mOpac = 1;
-	this.wfOpac = 0.1;
+	this.wfOpac = 0.01;
 	this.contrast = 1.7;
 	this.saturation = 0.87;
 	this.invertZ = false;
 	this.zDepth = 748;
 	this.noiseStrength = 20;
-	this.noiseScale = 0.01;
-	this.noiseSpeed = 0.02;
+	this.noiseScale = 0.1;
+	this.noiseSpeed = 0.05;
 	//this.doSnapshot = function() {};
 }
 
 function onParamsChange() {
 	meshMaterial.opacity = params.mOpac;
 	wireMaterial.opacity = params.wfOpac;
-	container.style.webkitFilter = "contrast(" + params.contrast + ") saturate(" + params.saturation + ")";
+	container.style.webkitFilter = "contrast(" + tv.contrast + ") saturate(" + tv.saturation + ")";
 }
 
 function getZDepths() {
 
-	noisePosn += params.noiseSpeed;
+	noisePosn += tv.ns;
 
 	//draw webcam video pixels to canvas for pixel analysis
 	//double up on last pixel get because there is one more vert than pixels
@@ -266,12 +341,12 @@ function getZDepths() {
 		for (var j = 0; j < canvasHeight + 1; j++) {
 			var color = new THREE.Color(getColor(i, j));
 			var brightness = getBrightness(color);
-			var gotoZ = params.zDepth * brightness - params.zDepth / 2;
+			var gotoZ = tv.z * brightness - tv.z / 2;
 
 			//add noise wobble
 			gotoZ += perlin.noise(i * params.noiseScale, j * params.noiseScale, noisePosn) * params.noiseStrength;
 			//invert?
-			if (params.invertZ) gotoZ = -gotoZ;
+			if (tv.invertZ) gotoZ = -gotoZ;
 			//tween to stablize
 			geometry.vertices[j * (canvasWidth + 1) + i].z += (gotoZ - geometry.vertices[j * (canvasWidth + 1) + i].z) / 5;
 		}
@@ -280,8 +355,8 @@ function getZDepths() {
 }
 
 function onMouseMove(event) {
-	mouseX = (event.clientX - windowHalfX) / (windowHalfX);
-	mouseY = (event.clientY - windowHalfY) / (windowHalfY);
+	// mouseX = (event.clientX - windowHalfX) / (windowHalfX);
+	// mouseY = (event.clientY - windowHalfY) / (windowHalfY);
 }
 
 function animate() {
@@ -289,6 +364,7 @@ function animate() {
 		videoTexture.needsUpdate = true;
 		getZDepths();
 	}
+	onParamsChange();
 	stats.update();
 	requestAnimationFrame(animate);
 	render();
@@ -297,8 +373,8 @@ function animate() {
 function render() {
 	mirror.scale.set(params.zoom*5,params.zoom*5,mirror.scale.z);
 	wiremirror.scale.set(params.zoom*5,params.zoom*5,wiremirror.scale.z);
-	world3D.rotation.x += ((mouseY * tiltAmount) - world3D.rotation.x) * tiltSpeed;
-	world3D.rotation.y += ((mouseX * tiltAmount) - world3D.rotation.y) * tiltSpeed;
+	world3D.rotation.x += ((tv.my * tiltAmount) - world3D.rotation.x) * tiltSpeed;
+	world3D.rotation.y += ((tv.mx * tiltAmount) - world3D.rotation.y) * tiltSpeed;
 	//camera.lookAt(camera.target);
 	renderer.render(scene, camera);
 }
