@@ -308,7 +308,7 @@ function invert() {
 function sat() {
 	Tween.get(tv)
 		.to({ sat: 0 + Math.random() * 2 }, 1000 + Math.random() * 3000)
-		.wait(Math.random() * 3000)
+		.wait(Math.random() * 2000)
 		.call(function() {
 			sat();
 		})
@@ -317,8 +317,8 @@ function sat() {
 
 function con() {
 	Tween.get(tv)
-		.to({ con: 1.3 + Math.random() * 2.0 }, 3000 + Math.random() * 7000)
-		.wait(Math.random() * 3000)
+		.to({ con: 1.3 + Math.random() * 2.0 }, 2000 + Math.random() * 3000)
+		.wait(Math.random() * 2000)
 		.call(function() {
 			con();
 		})
