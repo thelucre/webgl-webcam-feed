@@ -15,7 +15,7 @@ var canvasHeight = 240 / 4;
 var vidWidth = 320/4;
 var vidHeight = 240/4;
 var tiltSpeed = 0.1;
-var tiltAmount = 0.2;
+var tiltAmount = 0.3;
 
 var perlin = new ImprovedNoise();
 var camera, scene, renderer;
@@ -165,14 +165,16 @@ function init() {
 	var maskgeo = new THREE.BoxGeometry( 1000, 1000, 1 );
 	var maskmat = new THREE.MeshBasicMaterial( {color: 0x000000} );
 	var mask = new THREE.Mesh( maskgeo, maskmat );
-	mask.position.set(-570,0,400);
+	mask.position.set(-564,0,400);
+	mask.rotation.set(0,0,Math.PI/120);
 	masks.push(mask);
 	scene.add( mask );
 
 	var maskgeo = new THREE.BoxGeometry( 1000, 1000, 1 );
 	var maskmat = new THREE.MeshBasicMaterial( {color: 0x000000} );
 	var mask = new THREE.Mesh( maskgeo, maskmat );
-	mask.position.set(570,0,400);
+	mask.position.set(564,0,400);
+	mask.rotation.set(0,0,-Math.PI/120);
 	masks.push(mask);
 	scene.add( mask );
 
@@ -180,7 +182,7 @@ function init() {
 	var maskgeo = new THREE.BoxGeometry( 1000, 1000, 1 );
 	var maskmat = new THREE.MeshBasicMaterial( {color: 0x000000} );
 	var mask = new THREE.Mesh( maskgeo, maskmat );
-	mask.position.set(0,-650,400);
+	mask.position.set(0,-625,400);
 	masks.push(mask);
 	scene.add( mask );
 
@@ -188,9 +190,15 @@ function init() {
 	var maskgeo = new THREE.BoxGeometry( 1000, 1000, 1 );
 	var maskmat = new THREE.MeshBasicMaterial( {color: 0x000000} );
 	var mask = new THREE.Mesh( maskgeo, maskmat );
-	mask.position.set(0,650,400);
+	mask.position.set(0,625,400);
 	masks.push(mask);
 	scene.add( mask );
+
+	var maskgeo = new THREE.BoxGeometry( 1000, 6, 1 );
+	var maskmat = new THREE.MeshBasicMaterial( {color: 0x000000} );
+	var maskmid = new THREE.Mesh( maskgeo, maskmat );
+	maskmid.position.set(0,0,400);
+	scene.add( maskmid );
 
 	//init renderer
 	renderer = new THREE.WebGLRenderer({
@@ -236,6 +244,7 @@ function init() {
 		my: 0.5,
 		z: 150,
 		ns: 0.05,
+		nstr: 20,
 		invertZ: false,
 		sat: 0.87,
 		con: 1.7
@@ -263,7 +272,7 @@ function rTilt() {
 
 function rZ() {
 	Tween.get(tv)
-		.to({ z: 150 + Math.random() * 400 }, 3000 + Math.random() * 7000)
+		.to({ z: 150 + Math.random() * 500 }, 3000 + Math.random() * 7000)
 		.wait(Math.random() * 3000)
 		.call(function() {
 			rZ();
@@ -273,10 +282,20 @@ function rZ() {
 
 function nSpeed() {
 	Tween.get(tv)
-		.to({ ns: 0 + Math.random() * 1.2 }, 3000 + Math.random() * 7000)
+		.to({ ns: 0 + Math.random() * 0.25 }, 3000 + Math.random() * 7000)
 		.wait(Math.random() * 3000)
 		.call(function() {
 			nSpeed();
+		})
+	;
+}
+
+function nStrength() {
+	Tween.get(tv)
+		.to({ nstr: 0 + Math.random() * 140 }, 3000 + Math.random() * 7000)
+		.wait(Math.random() * 3000)
+		.call(function() {
+			nStrength();
 		})
 	;
 }
@@ -298,7 +317,7 @@ function sat() {
 
 function con() {
 	Tween.get(tv)
-		.to({ con: 1.3 + Math.random() * .5 }, 3000 + Math.random() * 7000)
+		.to({ con: 1.3 + Math.random() * 2.0 }, 3000 + Math.random() * 7000)
 		.wait(Math.random() * 3000)
 		.call(function() {
 			con();
@@ -309,7 +328,7 @@ function con() {
 // params for dat.gui
 
 function WCMParams() {
-	this.zoom = 2.9;
+	this.zoom = 3.5;
 	this.mOpac = 1;
 	this.wfOpac = 0.01;
 	this.contrast = 1.7;
@@ -325,7 +344,7 @@ function WCMParams() {
 function onParamsChange() {
 	meshMaterial.opacity = params.mOpac;
 	wireMaterial.opacity = params.wfOpac;
-	container.style.webkitFilter = "contrast(" + tv.contrast + ") saturate(" + tv.saturation + ")";
+	container.style.webkitFilter = "contrast(" + tv.con + ") saturate(" + tv.sat + ")";
 }
 
 function getZDepths() {
